@@ -1,4 +1,5 @@
 import googleapiclient.discovery as d
+import pandas as pd
 
 
 def get_channel_id(youtube: d.Resource):
@@ -43,3 +44,8 @@ def delete_video(youtube: d.Resource, video_id: str):
         id=video_id
     )
     request.execute()
+
+
+def upload_video(video_index: int):
+    videos = pd.read_excel('videos.xlsx')
+    return
