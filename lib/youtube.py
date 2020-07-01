@@ -1,5 +1,6 @@
 import googleapiclient.discovery as d
 import googleapiclient.errors as e
+import googleapiclient.http as h
 import pandas as pd
 import numpy as np
 import lib.globals as g
@@ -64,7 +65,7 @@ def get_video_description(video_data: pd.Series):
 
 
 def get_video_title(video_data: pd.Series):
-    video_title = f'{video_data.Title} | {video_data.Subject} - ' \
+    video_title = f'*** {video_data.Title} | {video_data.Subject} - ' \
                   f'{video_data.Grade}'
     return video_title
 
@@ -82,13 +83,28 @@ def add_video(youtube: d.Resource, video_data: pd.Series):
     return youtube_link
 
 
+def download_thumbnails():
+    import requests
+    import shutil
+    videos = pd.read_excel(g.video_file)
+    for index, row in videos.iterrows():
+        yt_id = row.OldYoutubeLink.split('/')[3]
+        image_url = f"https://img.youtube.com/vi/{yt_id}/maxresdefault.jpg"
+        resp = requests.get(image_url, stream=True)
+        local_file = open(f'input/thumbnails/{row.Id}.jpg', 'wb')
+        resp.raw.decode_content = True
+        shutil.copyfileobj(resp.raw, local_file)
+        del resp
+        print()
+
+
 def add_videos(youtube: d.Resource, video_ids: list, delete_old=False):
     videos = pd.read_excel(g.video_file)
     for index, video_data in videos[videos.Id.isin(video_ids)].iterrows():
         if delete_old and video_data.NewYoutubeLink:
             video_id = video_data.NewYoutubeLink.split('=')[1]
             delete_video(youtube=youtube, video_id=video_id)
-        if delete_old or np.isnan(video_data.NewYoutubeLink):
+        if delete_old or pd.isna(video_data.NewYoutubeLink):
             youtube_link = add_video(youtube=youtube, video_data=video_data)
             videos.loc[index, 'NewYoutubeLink'] = youtube_link
     videos.to_excel(g.video_file, index=False)
@@ -108,29 +124,47 @@ def get_video_data(title: str):
     return video_data.iloc[0, ]
 
 
-def update_video(youtube: d.Resource, videos: list):
-    for video in videos:
-        title_raw = video['snippet']['title'].split('|')[0].strip()
-        print(f'Updating data for "{title_raw}"')
-        video_data = get_video_data(title=title_raw)
+def update_video(youtube: d.Resource, video_ids: list):
+    videos = pd.read_excel(g.video_file)
+    for video_id in video_ids:
+        print(f'Updating data for video #{video_id}"')
+        video_data = videos[videos.Id == video_id].iloc[0, ]
         video_title = get_video_title(video_data=video_data)
         video_description = get_video_description(video_data=video_data)
-        video_id = video['snippet']['resourceId']['videoId']
-        request = youtube.videos().update(
-            part="snippet",
-            body={
-                "id": video_id,
-                "snippet": {
-                    "title": video_title,
-                    "description": video_description,
-                    "tags": video_data.Tags.split(','),
-                    "categoryId": 27
+        if not pd.isna(video_data.NewYoutubeLink):
+            youtube_id = video_data.NewYoutubeLink.split('/watch?v=')[1]
+            request = youtube.videos().update(
+                part="snippet",
+                body={
+                    "id": youtube_id,
+                    "snippet": {
+                        "title": video_title,
+                        "description": video_description,
+                        "tags": video_data.Tags.split(','),
+                        "categoryId": 27
+                    }
                 }
-            }
-        )
-        response = request.execute()
-        print(response)
-    print(video)
+            )
+            request.execute()
+        else:
+            raise ValueError(f'Youtube-link is missing!')
+
+
+def add_thumbnails(youtube: d.Resource, video_ids: list):
+    videos = pd.read_excel(g.video_file)
+    for video_id in video_ids:
+        print(f'Adding thumbnail for video #{video_id}"')
+        thumbnail_img = f"input/thumbnails/{video_id}.jpg"
+        link = videos.loc[videos.Id == video_id, 'NewYoutubeLink'].values[0]
+        if not pd.isna(link):
+            youtube_id = link.split('/watch?v=')[1]
+            request = youtube.thumbnails().set(
+                videoId=youtube_id,
+                media_body=h.MediaFileUpload(thumbnail_img)
+            )
+            request.execute()
+        else:
+            raise ValueError(f'Youtube-link is missing!')
 
 
 def rename_files():
