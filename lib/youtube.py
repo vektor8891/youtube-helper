@@ -170,3 +170,43 @@ def rename_files():
     for index, row in VIDEOS.iterrows():
         os.rename(f'input/videos/{row.Title}.mp4',
                   f'input/videos/{row.FileName}.mp4')
+
+
+def get_playlists(youtube: d.Resource):
+    playlists = {}
+    request = youtube.playlists().list(
+        part="snippet,contentDetails",
+        mine=True,
+        maxResults=25
+    )
+    response = request.execute()
+    for item in response['items']:
+        title = item['snippet']['title']
+        playlists[title] = item['id']
+    return playlists
+
+
+def delete_playlists(youtube: d.Resource, delete_existing=False):
+    playlists = get_playlists(youtube=youtube)
+    for name in playlists.keys():
+        if name not in PLAYLISTS.Name.values or delete_existing:
+            print(f'Delete playlist "{name}"')
+            youtube.playlists().delete(id=playlists[name]).execute()
+
+
+def create_playlists(youtube: d.Resource):
+    playlists = get_playlists(youtube=youtube)
+    for index, row in PLAYLISTS.iterrows():
+        name = f'{row.Name} | {row.Subject} {row.Grade}'
+        if name not in playlists.keys():
+            print(f'Create playlist "{name}"')
+            body = {"snippet": {"title": name},
+                    "status": {"privacyStatus": "public"}}
+            youtube.playlists().insert(part='snippet,status',
+                                       body=body).execute()
+
+
+def update_playlists(youtube: d.Resource, delete_existing=False):
+    delete_playlists(youtube=youtube, delete_existing=delete_existing)
+    create_playlists(youtube=youtube)
+    print(2)
