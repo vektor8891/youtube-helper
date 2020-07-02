@@ -2,9 +2,12 @@ import googleapiclient.discovery as d
 import googleapiclient.errors as e
 import googleapiclient.http as h
 import pandas as pd
-import numpy as np
 import lib.globals as g
 import lib.upload_video as u
+import lib.dataframe as dframe
+
+VIDEOS = pd.read_excel(g.video_file, sheet_name=g.sheet_videos)
+PLAYLISTS = pd.read_excel(g.video_file, sheet_name=g.sheet_playlists)
 
 
 def print_channel_info(youtube: d.Resource):
@@ -15,24 +18,24 @@ def print_channel_info(youtube: d.Resource):
     print(f'Channel info:\n\t- name: {channel_name}\n\t- id: {channel_id}')
 
 
-def get_videos(youtube: d.Resource):
+def get_uploaded_videos(youtube: d.Resource):
     print(f"Get videos for my channel")
     request = youtube.channels().list(mine=True, part='contentDetails')
     uploads = request.execute()
     playlist_id = \
         uploads["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
-    videos = []
+    uploaded_videos = []
     next_page_token = None
     while 1:
         res = youtube.playlistItems().list(playlistId=playlist_id,
                                            part='snippet',
                                            maxResults=50,
                                            pageToken=next_page_token).execute()
-        videos += res['items']
+        uploaded_videos += res['items']
         next_page_token = res.get('nextPageToken')
         if next_page_token is None:
             break
-    return videos
+    return uploaded_videos
 
 
 def get_video_ids(videos: list):
@@ -65,8 +68,8 @@ def get_video_description(video_data: pd.Series):
 
 
 def get_video_title(video_data: pd.Series):
-    video_title = f'*** {video_data.Title} | {video_data.Subject} - ' \
-                  f'{video_data.Grade}'
+    video_title = f'{video_data.Title} | {video_data.Subject} - ' \
+                  f'{video_data.Grade}🧐'
     return video_title
 
 
@@ -86,8 +89,7 @@ def add_video(youtube: d.Resource, video_data: pd.Series):
 def download_thumbnails():
     import requests
     import shutil
-    videos = pd.read_excel(g.video_file)
-    for index, row in videos.iterrows():
+    for index, row in VIDEOS.iterrows():
         yt_id = row.OldYoutubeLink.split('/')[3]
         image_url = f"https://img.youtube.com/vi/{yt_id}/maxresdefault.jpg"
         resp = requests.get(image_url, stream=True)
@@ -99,36 +101,33 @@ def download_thumbnails():
 
 
 def add_videos(youtube: d.Resource, video_ids: list, delete_old=False):
-    videos = pd.read_excel(g.video_file)
-    for index, video_data in videos[videos.Id.isin(video_ids)].iterrows():
+    for index, video_data in VIDEOS[VIDEOS.Id.isin(video_ids)].iterrows():
         if delete_old and video_data.NewYoutubeLink:
             video_id = video_data.NewYoutubeLink.split('=')[1]
             delete_video(youtube=youtube, video_id=video_id)
         if delete_old or pd.isna(video_data.NewYoutubeLink):
             youtube_link = add_video(youtube=youtube, video_data=video_data)
-            videos.loc[index, 'NewYoutubeLink'] = youtube_link
-    videos.to_excel(g.video_file, index=False)
-    return 2
+            VIDEOS.loc[index, 'NewYoutubeLink'] = youtube_link
+    dframe.export_sheet(df=VIDEOS, sheet_name=g.sheet_videos,
+                        f_path=g.video_file)
 
 
 def get_video_data(title: str):
     print(f'Find video data for "{title}"')
-    videos = pd.read_excel(g.video_file)
-    video_data = videos[
-        (videos['FileName'] == title) | (videos['Title'] == title)
-    ]
+    video_data = VIDEOS[
+        (VIDEOS['FileName'] == title) | (VIDEOS['Title'] == title)
+        ]
     if len(video_data.index) == 0:
         raise ValueError(f'No match for "{title}"')
     elif len(video_data.index) > 1:
         raise ValueError(f'Multiple match for "{title}"')
-    return video_data.iloc[0, ]
+    return video_data.iloc[0, :]
 
 
 def update_video(youtube: d.Resource, video_ids: list):
-    videos = pd.read_excel(g.video_file)
     for video_id in video_ids:
-        print(f'Updating data for video #{video_id}"')
-        video_data = videos[videos.Id == video_id].iloc[0, ]
+        print(f'Updating data for video #{video_id}')
+        video_data = VIDEOS[VIDEOS.Id == video_id].iloc[0, ]
         video_title = get_video_title(video_data=video_data)
         video_description = get_video_description(video_data=video_data)
         if not pd.isna(video_data.NewYoutubeLink):
@@ -151,11 +150,10 @@ def update_video(youtube: d.Resource, video_ids: list):
 
 
 def add_thumbnails(youtube: d.Resource, video_ids: list):
-    videos = pd.read_excel(g.video_file)
     for video_id in video_ids:
-        print(f'Adding thumbnail for video #{video_id}"')
+        print(f'Adding thumbnail for video #{video_id}')
         thumbnail_img = f"input/thumbnails/{video_id}.jpg"
-        link = videos.loc[videos.Id == video_id, 'NewYoutubeLink'].values[0]
+        link = VIDEOS.loc[VIDEOS.Id == video_id, 'NewYoutubeLink'].values[0]
         if not pd.isna(link):
             youtube_id = link.split('/watch?v=')[1]
             request = youtube.thumbnails().set(
@@ -169,7 +167,6 @@ def add_thumbnails(youtube: d.Resource, video_ids: list):
 
 def rename_files():
     import os
-    videos = pd.read_excel(g.video_file)
-    for index, row in videos.iterrows():
+    for index, row in VIDEOS.iterrows():
         os.rename(f'input/videos/{row.Title}.mp4',
                   f'input/videos/{row.FileName}.mp4')
