@@ -3,7 +3,10 @@ from googleapiclient import discovery as d, errors as e
 
 from lib import upload_video as u, dataframe as dframe, globals as g
 
-VIDEOS = pd.read_excel(g.video_file, sheet_name=g.sheet_videos)
+
+def get_videos():
+    videos = pd.read_excel(g.video_file, sheet_name=g.sheet_videos)
+    return videos
 
 
 def get_video_ids(videos: list):
@@ -55,22 +58,25 @@ def add_video(youtube: d.Resource, video_data: pd.Series):
 
 
 def add_videos(youtube: d.Resource, video_ids: list, delete_old=False):
-    for index, video_data in VIDEOS[VIDEOS.Id.isin(video_ids)].iterrows():
+    videos = get_videos()
+    for index, video_data in videos[videos.Id.isin(video_ids)].iterrows():
         if delete_old and video_data.NewYoutubeLink:
             video_id = video_data.NewYoutubeLink.split('=')[1]
             delete_video(youtube=youtube, video_id=video_id)
         if delete_old or pd.isna(video_data.NewYoutubeLink):
             youtube_link = add_video(youtube=youtube, video_data=video_data)
-            VIDEOS.loc[index, 'NewYoutubeLink'] = youtube_link
-    dframe.export_sheet(df=VIDEOS, sheet_name=g.sheet_videos,
+            videos.loc[index, 'NewYoutubeLink'] = youtube_link
+    dframe.export_sheet(df=videos, sheet_name=g.sheet_videos,
                         f_path=g.video_file)
 
 
 def get_video_data(title: str):
     print(f'Find video data for "{title}"')
-    video_data = VIDEOS[
-        (VIDEOS['FileName'] == title) | (VIDEOS['Title'] == title)
-        ]
+    videos = get_videos()
+    video_data = videos[
+        (videos['FileName'] == title) |
+        (videos['Title'] == title)
+    ]
     if len(video_data.index) == 0:
         raise ValueError(f'No match for "{title}"')
     elif len(video_data.index) > 1:
@@ -79,9 +85,10 @@ def get_video_data(title: str):
 
 
 def update_video(youtube: d.Resource, video_ids: list):
+    videos = get_videos()
     for video_id in video_ids:
         print(f'Updating data for video #{video_id}')
-        video_data = VIDEOS[VIDEOS.Id == video_id].iloc[0, ]
+        video_data = videos[videos.Id == video_id].iloc[0, ]
         video_title = get_video_title(video_data=video_data)
         video_description = get_video_description(video_data=video_data)
         if not pd.isna(video_data.NewYoutubeLink):

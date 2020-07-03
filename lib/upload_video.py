@@ -55,6 +55,7 @@ def upload_video(
     # Call the API's videos.insert method to create and upload the video.
     insert_request = youtube.videos().insert(
         part=','.join(body.keys()),
+        notifySubscribers=False,
         body=body,
         media_body=MediaFileUpload(file, chunksize=-1, resumable=True)
     )

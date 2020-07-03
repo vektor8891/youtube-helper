@@ -3,8 +3,6 @@ from googleapiclient import discovery as d
 
 from lib import globals as g
 
-PLAYLISTS = pd.read_excel(g.video_file, sheet_name=g.sheet_playlists)
-
 
 def get_playlists(youtube: d.Resource):
     playlists = {}
@@ -22,8 +20,10 @@ def get_playlists(youtube: d.Resource):
 
 def delete_playlists(youtube: d.Resource, delete_existing=False):
     playlists = get_playlists(youtube=youtube)
+    df_playlists = pd.read_excel(g.video_file, sheet_name=g.sheet_playlists)
     for playlist in playlists.keys():
-        if playlist not in PLAYLISTS.PlaylistName.unique() or delete_existing:
+        if playlist not in df_playlists.PlaylistName.unique() or \
+                delete_existing:
             print(f'Delete playlist "{playlist}"')
             youtube.playlists().delete(id=playlists[playlist]).execute()
 
@@ -51,7 +51,8 @@ def insert_playlist_item(youtube: d.Resource, youtube_id: str,
 
 def add_video_to_playlist(youtube: d.Resource, video_id: int):
     playlists = get_playlists(youtube=youtube)
-    playlists_filt = PLAYLISTS[PLAYLISTS.VideoId == video_id]
+    df_playlists = pd.read_excel(g.video_file, sheet_name=g.sheet_playlists)
+    playlists_filt = df_playlists[df_playlists.VideoId == video_id]
     for index, row in playlists_filt.iterrows():
         print(f'Adding video #{video_id} to playlist {row.PlaylistName}')
         youtube_id = row.YoutubeLink.split('=')[1]
