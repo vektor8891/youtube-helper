@@ -1,6 +1,6 @@
-client_secrets_file = "private/client_secret.json"
-credentials_file = "private/credentials.json"
-api_file = "private/api.json"
+client_id = 1
+client_secrets_file = f"private/client{client_id}/client_secret.json"
+credentials_file = f"private/client{client_id}/credentials.json"
 video_file = "input/videos.xlsx"
 sheet_videos = "Videos"
 sheet_playlists = "Playlists"

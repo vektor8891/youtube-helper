@@ -1,12 +1,19 @@
-import lib.auth
-import lib.youtube
+import lib.auth as a
+import lib.youtube_channel as c
+import lib.youtube_playlists as p
+import lib.youtube_videos as v
+import lib.globals as g
+import lib.youtube_thumbnails as t
 
-# lib.youtube.download_thumbnails()
-conn = lib.auth.get_connection(create_new=0)
-# lib.youtube.print_channel_info(youtube=conn)
-# videos = lib.youtube.get_videos(youtube=conn)
-video_ids = [7, 8, 9]
-# lib.youtube.add_videos(youtube=conn, video_ids=video_ids, delete_old=False)
-# lib.youtube.update_video(youtube=conn, video_ids=video_ids)
-lib.youtube.add_thumbnails(youtube=conn, video_ids=video_ids)
+g.client_id = 1
+video_ids = list(range(1, 10))
+# video_ids = [1]
+
+conn = a.get_connection(create_new=0)
+c.print_channel_info(youtube=conn)
+v.add_videos(youtube=conn, video_ids=video_ids, delete_old=False)
+v.update_video(youtube=conn, video_ids=video_ids)
+# t.add_thumbnails(youtube=conn, video_ids=video_ids)
+# p.update_playlists(youtube=conn, delete_existing=False)
 print()
+
