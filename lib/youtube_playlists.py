@@ -28,35 +28,10 @@ def delete_playlists(youtube: d.Resource, delete_existing=False):
             youtube.playlists().delete(id=playlists[playlist]).execute()
 
 
-def create_playlists(youtube: d.Resource):
-    playlists = get_playlists(youtube=youtube)
-    for playlist_name in PLAYLISTS.PlaylistName.unique():
-        if playlist_name not in playlists.keys():
-            print(f'Create playlist "{playlist_name}"')
-            body = {"snippet": {"title": playlist_name},
-                    "status": {"privacyStatus": "public"}}
-            youtube.playlists().insert(part='snippet,status',
-                                       body=body).execute()
-
-
-def remove_playlist_items(youtube: d.Resource):
-    playlists = get_playlists(youtube=youtube)
-    for playlist in playlists:
-        playlist_filtered = PLAYLISTS[PLAYLISTS.PlaylistName == playlist]
-        for index, row in playlist_filtered.iterrows():
-            request = youtube.playlistItems().list(
-                part="id",
-                id=playlists[playlist]
-            )
-            response = request.execute()
-            a = response['items']
-            print(2)
-
-
-def add_playlist_item(youtube: d.Resource, youtube_id: str,
-                      playlist_id: str, position: int, name: str):
-    print(f'Adding video #{youtube_id} to playlist "{name}" to position '
-          f'{position}')
+def insert_playlist_item(youtube: d.Resource, youtube_id: str,
+                         playlist_id: str, position: int):
+    print(f'Inserting video #{youtube_id} into playlist #{playlist_id} at '
+          f'position {position}')
     request = youtube.playlistItems().insert(
         part="snippet",
         body={
@@ -74,21 +49,21 @@ def add_playlist_item(youtube: d.Resource, youtube_id: str,
     return response
 
 
-def add_playlist_items(youtube: d.Resource):
+def add_video_to_playlist(youtube: d.Resource, video_id: int):
     playlists = get_playlists(youtube=youtube)
-    for name in PLAYLISTS.Name.unique():
-        for index, row in PLAYLISTS[PLAYLISTS.Name == name].iterrows():
-            title = f'{row.Name} | {row.Subject} {row.Grade}'
-            playlist_id = playlists[title]
-            youtube_id = row.YoutubeLink.split('=')[1]
-            add_playlist_item(youtube=youtube, youtube_id=youtube_id,
-                              playlist_id=playlist_id, name=name,
-                              position=row.Position)
+    playlists_filt = PLAYLISTS[PLAYLISTS.VideoId == video_id]
+    for index, row in playlists_filt.iterrows():
+        print(f'Adding video #{video_id} to playlist {row.PlaylistName}')
+        youtube_id = row.YoutubeLink.split('=')[1]
+        if row.PlaylistName not in playlists.keys():
+            raise ValueError(f'Playlist "{row.PlaylistName}" not found! '
+                             f'Please create it manually.')
+        else:
+            playlist_id = playlists[row.PlaylistName]
+        insert_playlist_item(youtube=youtube, youtube_id=youtube_id,
+                             playlist_id=playlist_id, position=row.Position)
 
 
-def update_playlists(youtube: d.Resource, delete_existing=False):
-    delete_playlists(youtube=youtube, delete_existing=delete_existing)
-    create_playlists(youtube=youtube)
-    remove_playlist_items(youtube=youtube)
-    add_playlist_items(youtube=youtube)
-    print(2)
+def add_videos_to_playlist(youtube: d.Resource, video_ids: list):
+    for video_id in video_ids:
+        add_video_to_playlist(youtube=youtube, video_id=video_id)

@@ -11,9 +11,7 @@ video_ids = list(range(1, 10))
 
 conn = a.get_connection(create_new=0)
 c.print_channel_info(youtube=conn)
-v.add_videos(youtube=conn, video_ids=video_ids, delete_old=False)
-v.update_video(youtube=conn, video_ids=video_ids)
+# v.add_videos(youtube=conn, video_ids=video_ids, delete_old=False)
+# v.update_video(youtube=conn, video_ids=video_ids)
 # t.add_thumbnails(youtube=conn, video_ids=video_ids)
-# p.update_playlists(youtube=conn, delete_existing=False)
-print()
-
+p.add_videos_to_playlist(youtube=conn, video_ids=video_ids)
