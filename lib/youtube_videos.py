@@ -5,8 +5,8 @@ from googleapiclient import discovery as d, errors as e
 from lib import upload_video as u, dataframe as dframe, globals as g
 
 
-def get_videos(client_id: int):
-    f_path = g.video_file.format(client_id=client_id)
+def get_videos(env: int):
+    f_path = g.video_file.format(env=env)
     videos = pd.read_excel(f_path, sheet_name=g.sheet_videos)
     return videos
 
@@ -18,8 +18,8 @@ def get_privacy_status(youtube: d.Resource, youtube_id: str):
     return status
 
 
-def get_youtube_id(video_id: int, client_id: int):
-    videos = get_videos(client_id=client_id)
+def get_youtube_id(video_id: int, env: int):
+    videos = get_videos(env=env)
     link = videos.loc[videos.Id == video_id, 'NewYoutubeLink'].values[0]
     try:
         youtube_id = link.split('=')[1]
@@ -93,9 +93,9 @@ def add_video(youtube: d.Resource, video_data: pd.Series, status='private'):
     return youtube_link
 
 
-def add_videos(youtube: d.Resource, video_ids: list, client_id: int,
+def add_videos(youtube: d.Resource, video_ids: list, env: int,
                status='private', delete_old=False):
-    videos = get_videos(client_id=client_id)
+    videos = get_videos(env=env)
     for index, video_data in videos[videos.Id.isin(video_ids)].iterrows():
         if delete_old and video_data.NewYoutubeLink:
             video_id = video_data.NewYoutubeLink.split('=')[1]
@@ -104,13 +104,13 @@ def add_videos(youtube: d.Resource, video_ids: list, client_id: int,
             youtube_link = add_video(youtube=youtube, video_data=video_data,
                                      status=status)
             videos.loc[index, 'NewYoutubeLink'] = youtube_link
-    f_path = g.video_file.format(client_id=client_id)
+    f_path = g.video_file.format(env=env)
     dframe.export_sheet(df=videos, sheet_name=g.sheet_videos, f_path=f_path)
 
 
-def get_video_data(title: str, client_id: int):
+def get_video_data(title: str, env: int):
     print(f'Find video data for "{title}"')
-    videos = get_videos(client_id=client_id)
+    videos = get_videos(env=env)
     video_data = videos[
         (videos['FileName'] == title) |
         (videos['Title'] == title)
@@ -123,8 +123,8 @@ def get_video_data(title: str, client_id: int):
 
 
 def update_videos(youtube: d.Resource, video_ids: list,
-                  client_id: int, status='private'):
-    videos = get_videos(client_id=client_id)
+                  env: int, status='private'):
+    videos = get_videos(env=env)
     for video_id in video_ids:
         print(f'Updating data for video #{video_id}')
         video_data = videos[videos.Id == video_id].iloc[0, ]

@@ -69,11 +69,11 @@ def update_comment(youtube: d.Resource, comment_id: str, comment_text: str):
     return response
 
 
-def add_comments(youtube: d.Resource, video_ids: list, client_id: int):
-    videos = v.get_videos(client_id=client_id)
+def add_comments(youtube: d.Resource, video_ids: list, env: int):
+    videos = v.get_videos(env=env)
     for index, row in videos[videos.Id.isin(video_ids)].iterrows():
         comment_text = get_comment_text(video_data=row)
-        youtube_id = v.get_youtube_id(video_id=row.Id, client_id=client_id)
+        youtube_id = v.get_youtube_id(video_id=row.Id, env=env)
         status = v.get_privacy_status(youtube=youtube, youtube_id=youtube_id)
         if status == 'private':
             raise ValueError('Cannot add comment to private video!')
@@ -86,5 +86,5 @@ def add_comments(youtube: d.Resource, video_ids: list, client_id: int):
             comment_id = add_comment(youtube=youtube, youtube_id=youtube_id,
                                      comment_text=comment_text)
             videos.loc[index, 'CommentId'] = comment_id
-    f_path = g.video_file.format(client_id=client_id)
+    f_path = g.video_file.format(env=env)
     dframe.export_sheet(df=videos, sheet_name=g.sheet_videos, f_path=f_path)

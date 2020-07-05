@@ -4,8 +4,8 @@ from googleapiclient import discovery as d, http as h
 import lib.youtube_videos
 
 
-def add_thumbnails(youtube: d.Resource, video_ids: list, client_id: int):
-    df_videos = lib.youtube_videos.get_videos(client_id=client_id)
+def add_thumbnails(youtube: d.Resource, video_ids: list, env: int):
+    df_videos = lib.youtube_videos.get_videos(env=env)
     for video_id in video_ids:
         print(f'Adding thumbnail for video #{video_id}')
         thumbnail_img = f"input/thumbnails/{video_id}.jpg"
