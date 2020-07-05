@@ -1,10 +1,11 @@
 import pandas as pd
 from googleapiclient import discovery as d
 
-from lib import globals as g
+import lib.globals as g
+import lib.youtube_videos as v
 
 
-def get_playlists(youtube: d.Resource):
+def get_youtube_playlists(youtube: d.Resource):
     playlists = {}
     request = youtube.playlists().list(
         part="snippet,contentDetails",
@@ -18,20 +19,19 @@ def get_playlists(youtube: d.Resource):
     return playlists
 
 
-def delete_playlists(youtube: d.Resource, delete_existing=False):
-    playlists = get_playlists(youtube=youtube)
-    df_playlists = pd.read_excel(g.video_file, sheet_name=g.sheet_playlists)
-    for playlist in playlists.keys():
-        if playlist not in df_playlists.PlaylistName.unique() or \
-                delete_existing:
-            print(f'Delete playlist "{playlist}"')
-            youtube.playlists().delete(id=playlists[playlist]).execute()
+def get_playlist_data(client_id: int):
+    f_path = g.video_file.format(client_id=client_id)
+    playlists = pd.read_excel(f_path, sheet_name=g.sheet_playlists)
+    playlists['PlaylistName'] = playlists.apply(
+        lambda x: f"{x.Name} | {x.Subject} {x.Grade}",
+        axis=1
+    )
+    return playlists
 
 
 def insert_playlist_item(youtube: d.Resource, youtube_id: str,
                          playlist_id: str, position: int):
-    print(f'Inserting video #{youtube_id} into playlist #{playlist_id} at '
-          f'position {position}')
+    print(f'Inserting #{youtube_id} into playlist at position {position}')
     request = youtube.playlistItems().insert(
         part="snippet",
         body={
@@ -49,13 +49,13 @@ def insert_playlist_item(youtube: d.Resource, youtube_id: str,
     return response
 
 
-def add_video_to_playlist(youtube: d.Resource, video_id: int):
-    playlists = get_playlists(youtube=youtube)
-    df_playlists = pd.read_excel(g.video_file, sheet_name=g.sheet_playlists)
+def add_video_to_playlist(youtube: d.Resource, video_id: int, client_id: int):
+    playlists = get_youtube_playlists(youtube=youtube)
+    df_playlists = get_playlist_data(client_id=client_id)
     playlists_filt = df_playlists[df_playlists.VideoId == video_id]
     for index, row in playlists_filt.iterrows():
-        print(f'Adding video #{video_id} to playlist {row.PlaylistName}')
-        youtube_id = row.YoutubeLink.split('=')[1]
+        print(f'Adding video #{video_id} to playlist "{row.PlaylistName}"')
+        youtube_id = v.get_youtube_id(video_id=video_id, client_id=client_id)
         if row.PlaylistName not in playlists.keys():
             raise ValueError(f'Playlist "{row.PlaylistName}" not found! '
                              f'Please create it manually.')
@@ -65,6 +65,8 @@ def add_video_to_playlist(youtube: d.Resource, video_id: int):
                              playlist_id=playlist_id, position=row.Position)
 
 
-def add_videos_to_playlist(youtube: d.Resource, video_ids: list):
+def add_videos_to_playlist(youtube: d.Resource, video_ids: list,
+                           client_id: int):
     for video_id in video_ids:
-        add_video_to_playlist(youtube=youtube, video_id=video_id)
+        add_video_to_playlist(youtube=youtube, video_id=video_id,
+                              client_id=client_id)

@@ -1,12 +1,19 @@
 import googleapiclient.discovery as d
 
 
-def print_channel_info(youtube: d.Resource):
+def print_info(youtube: d.Resource):
     request = youtube.channels().list(part="snippet", mine=True)
     response = request.execute()
     channel_id = response['items'][0]['id']
     channel_name = response['items'][0]['snippet']['title']
     print(f'Channel info:\n\t- name: {channel_name}\n\t- id: {channel_id}')
+
+
+def get_id(youtube: d.Resource):
+    request = youtube.channels().list(part="id", mine=True)
+    response = request.execute()
+    channel_id = response['items'][0]['id']
+    return channel_id
 
 
 def get_channel_videos(youtube: d.Resource):

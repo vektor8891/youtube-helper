@@ -6,27 +6,31 @@ import google.oauth2.credentials as c
 from lib import globals as g
 
 
-def get_credentials(create_new=False):
-    credentials = create_credentials() if create_new else read_credentials()
+def get_credentials(client_id: int, create_new=False):
+    if create_new:
+        credentials = create_credentials(client_id=client_id)
+    else:
+        credentials = read_credentials(client_id=client_id)
     return credentials
 
 
-def read_credentials():
-    print(f'Reading credentials from {g.credentials_file}...')
-    credentials = c.Credentials.from_authorized_user_file(g.credentials_file)
+def read_credentials(client_id: int):
+    f_path = g.credentials_file.format(client_id=client_id)
+    print(f'Reading credentials from {f_path}...')
+    credentials = c.Credentials.from_authorized_user_file(f_path)
     return credentials
 
 
-def create_credentials():
-    print("Create credentials...")
-    flow = f.InstalledAppFlow.from_client_secrets_file(
-        g.client_secrets_file, g.scopes)
+def create_credentials(client_id: int):
+    print(f"Create credentials for client #{client_id}...")
+    f_path = g.client_secrets_file.format(client_id=client_id)
+    flow = f.InstalledAppFlow.from_client_secrets_file(f_path, g.scopes)
     credentials = flow.run_console()
-    save_credentials(credentials=credentials)
+    save_credentials(credentials=credentials, client_id=client_id)
     return credentials
 
 
-def save_credentials(credentials):
+def save_credentials(credentials, client_id: int):
     credentials_data = {
         'token': credentials.token,
         'refresh_token': credentials.refresh_token,
@@ -35,9 +39,10 @@ def save_credentials(credentials):
         'client_secret': credentials.client_secret,
         'scopes': credentials.scopes
     }
-    with open(g.credentials_file, 'w') as outfile:
+    f_path = g.credentials_file.format(client_id=client_id)
+    with open(f_path, 'w') as outfile:
         json.dump(credentials_data, outfile)
-    print(f"Credentials saved to {g.credentials_file}.")
+    print(f"Credentials saved to {f_path}.")
 
 
 def get_api_connection():
@@ -48,7 +53,7 @@ def get_api_connection():
     return youtube
 
 
-def get_connection(create_new=False):
-    credentials = get_credentials(create_new=create_new)
+def get_connection(client_id: int, create_new=False):
+    credentials = get_credentials(create_new=create_new, client_id=client_id)
     youtube = d.build('youtube', 'v3', credentials=credentials)
     return youtube
