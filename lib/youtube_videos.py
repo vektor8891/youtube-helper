@@ -5,7 +5,7 @@ from googleapiclient import discovery as d, errors as e
 from lib import upload_video as u, dataframe as dframe, globals as g
 
 
-def get_videos(env: int):
+def get_videos(env: str):
     f_path = g.video_file.format(env=env)
     videos = pd.read_excel(f_path, sheet_name=g.sheet_videos)
     return videos
@@ -18,7 +18,7 @@ def get_privacy_status(youtube: d.Resource, youtube_id: str):
     return status
 
 
-def get_youtube_id(video_id: int, env: int):
+def get_youtube_id(video_id: int, env: str):
     videos = get_videos(env=env)
     link = videos.loc[videos.Id == video_id, 'NewYoutubeLink'].values[0]
     try:
@@ -60,6 +60,20 @@ def delete_video(youtube: d.Resource, video_id: str):
         print(f"Could not delete video {video_id}")
 
 
+def get_markdown(video_id: int, env: str):
+    videos = get_videos(env=env)
+    link = videos.loc[videos.Id == video_id, 'NewYoutubeLink'].values[0]
+    if pd.isna(link):
+        return f"No markdown for #{video_id}"
+    title = videos.loc[videos.Id == video_id, 'Title'].values[0]
+    youtube_id = get_youtube_id(video_id=video_id, env=env)
+    markdown = f'->[![{title}]' \
+               f'(http://img.youtube.com/vi/{youtube_id}/0.jpg)]' \
+               f'(http://www.youtube.com/watch?v={youtube_id} ' \
+               f'"{title}")<-'
+    return markdown
+
+
 def get_video_description(video_data: pd.Series):
     desc = f'FELADAT GYAKORLÁSA: {video_data.ExerciseLink}\n' \
            f' - Tantárgy: Matematika 5. osztály\n' \
@@ -93,7 +107,7 @@ def add_video(youtube: d.Resource, video_data: pd.Series, status='private'):
     return youtube_link
 
 
-def add_videos(youtube: d.Resource, video_ids: list, env: int,
+def add_videos(youtube: d.Resource, video_ids: list, env: str,
                status='private', delete_old=False):
     videos = get_videos(env=env)
     for index, video_data in videos[videos.Id.isin(video_ids)].iterrows():

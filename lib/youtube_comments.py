@@ -69,7 +69,7 @@ def update_comment(youtube: d.Resource, comment_id: str, comment_text: str):
     return response
 
 
-def add_comments(youtube: d.Resource, video_ids: list, env: int):
+def add_comments(youtube: d.Resource, video_ids: list, env: str):
     videos = v.get_videos(env=env)
     for index, row in videos[videos.Id.isin(video_ids)].iterrows():
         comment_text = get_comment_text(video_data=row)

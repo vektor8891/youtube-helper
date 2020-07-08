@@ -5,7 +5,7 @@ import lib.globals as g
 import lib.youtube_videos as v
 
 
-def delete_playlists(youtube: d.Resource, env: int,
+def delete_playlists(youtube: d.Resource, env: str,
                      delete_existing=False):
     playlists = get_youtube_playlists(youtube=youtube)
     df_playlists = get_playlist_data(env=env)
@@ -30,7 +30,7 @@ def get_youtube_playlists(youtube: d.Resource):
     return playlists
 
 
-def get_playlist_data(env: int):
+def get_playlist_data(env: str):
     f_path = g.video_file.format(env=env)
     playlists = pd.read_excel(f_path, sheet_name=g.sheet_playlists)
     playlists['PlaylistName'] = playlists.apply(
@@ -60,7 +60,7 @@ def insert_playlist_item(youtube: d.Resource, youtube_id: str,
     return response
 
 
-def add_video_to_playlist(youtube: d.Resource, video_id: int, env: int):
+def add_video_to_playlist(youtube: d.Resource, video_id: int, env: str):
     playlists = get_youtube_playlists(youtube=youtube)
     df_playlists = get_playlist_data(env=env)
     playlists_filt = df_playlists[df_playlists.VideoId == video_id]
@@ -77,7 +77,7 @@ def add_video_to_playlist(youtube: d.Resource, video_id: int, env: int):
 
 
 def add_videos_to_playlist(youtube: d.Resource, video_ids: list,
-                           env: int):
+                           env: str):
     for video_id in video_ids:
         add_video_to_playlist(youtube=youtube, video_id=video_id,
                               env=env)
