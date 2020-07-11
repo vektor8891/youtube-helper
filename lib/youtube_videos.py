@@ -90,6 +90,9 @@ def get_video_description(video_data: pd.Series):
 def get_video_title(video_data: pd.Series):
     video_title = f'{video_data.Title} | {video_data.Subject} - ' \
                   f'{video_data.Grade}'
+    if len(video_title) > 100:
+        raise ValueError(f'Title is too long: "{video_title}"\n'
+                         f'It should be: "{video_title[0:99]}"')
     return video_title
 
 
@@ -110,6 +113,7 @@ def add_video(youtube: d.Resource, video_data: pd.Series, status='private'):
 def add_videos(youtube: d.Resource, video_ids: list, env: str,
                status='private', delete_old=False):
     videos = get_videos(env=env)
+    f_path = g.video_file.format(env=env)
     for index, video_data in videos[videos.Id.isin(video_ids)].iterrows():
         if delete_old and video_data.NewYoutubeLink:
             video_id = video_data.NewYoutubeLink.split('=')[1]
@@ -118,8 +122,8 @@ def add_videos(youtube: d.Resource, video_ids: list, env: str,
             youtube_link = add_video(youtube=youtube, video_data=video_data,
                                      status=status)
             videos.loc[index, 'NewYoutubeLink'] = youtube_link
-    f_path = g.video_file.format(env=env)
-    dframe.export_sheet(df=videos, sheet_name=g.sheet_videos, f_path=f_path)
+            dframe.export_sheet(df=videos, sheet_name=g.sheet_videos,
+                                f_path=f_path)
 
 
 def get_video_data(title: str, env: int):

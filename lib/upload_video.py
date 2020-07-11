@@ -5,7 +5,6 @@ import time
 from http import client
 import httplib2
 
-from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 import googleapiclient.discovery as d
@@ -37,9 +36,11 @@ def upload_video(
         description: str,
         category=27,
         privacy='private',
-        tags=[]
+        tags=None
 ):
 
+    if tags is None:
+        tags = []
     body = dict(
         snippet=dict(
             title=title,
@@ -82,7 +83,8 @@ def resumable_upload(request):
                     return f'https://www.youtube.com/watch?v={response["id"]}'
                 else:
                     exit(
-                        'The upload failed with an unexpected response: %s' % response)
+                        'The upload failed with an unexpected response: %s' %
+                        response)
         except HttpError as e:
             if e.resp.status in RETRIABLE_STATUS_CODES:
                 error = 'A retriable HTTP error %d occurred:\n%s' % (
