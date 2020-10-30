@@ -1,4 +1,4 @@
-client_secrets_file = "private/client{client_id}/client_secret.json"
+client_secrets_file = "private/client{client_id}/client_secrets.json"
 credentials_file = "private/client{client_id}/credentials.json"
 video_file = "input/videos_{env}.xlsx"
 sheet_videos = "Videos"

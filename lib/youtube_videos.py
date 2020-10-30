@@ -79,10 +79,8 @@ def get_video_description(video_data: pd.Series):
            f' - Tantárgy: Matematika 5. osztály\n' \
            f' - Témakör: {video_data.Topic}\n' \
            f' - Feladat: {video_data.Exercise}\n\n' \
-           f'Csatlakozz Facebook csoportjainkhoz!\n' \
-           f' - OKTATÓKNAK: https://www.fb.com/groups/597933901141678\n' \
-           f' - DIÁKOKNAK: https://www.fb.com/groups/197327654946239\n' \
-           f' - SZÜLŐKNEK: https://www.fb.com/groups/1570054486486347\n' \
+           f'Kövess minket Facebook-on!\n' \
+           f'https://www.facebook.com/zsebtanar/\n' \
            f'\n#zsebtanar #matematika'
     return desc
 
