@@ -1,6 +1,7 @@
-venv/
-private/
-output/
-input/videos/
+venv
+private
+output
+input/videos
+input/thumbnails
 .idea
 .~*
