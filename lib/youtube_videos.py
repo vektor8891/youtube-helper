@@ -2,13 +2,37 @@ import pandas as pd
 import json
 from googleapiclient import discovery as d, errors as e
 
-from lib import upload_video as u, dataframe as dframe, globals as g
+import lib.youtube_channel as channel
+import lib.upload_video as u
+import lib.dataframe as dataframe
+import lib.globals as g
 
 
 def get_videos(env: str):
     f_path = g.video_file.format(env=env)
     videos = pd.read_excel(f_path, sheet_name=g.sheet_videos)
     return videos
+
+
+def compare_videos(env: str, youtube: d.Resource):
+    uploaded_videos = channel.get_channel_videos(youtube)
+    uploaded_video_ids = []
+    for video in uploaded_videos:
+        uploaded_video_id = video['snippet']['resourceId']['videoId']
+        uploaded_video_ids.append(uploaded_video_id)
+    listed_video_ids = [v_id[-11:] for v_id in get_videos(env).NewYoutubeLink]
+    if sorted(uploaded_video_ids) != sorted(listed_video_ids):
+        missing_listed = set(listed_video_ids) - set(uploaded_video_ids)
+        missing_uploaded = set(uploaded_video_ids) - set(listed_video_ids)
+        if len(missing_listed) > 0:
+            # '3ZNJBKJcwF8' duplicated in the youtube list
+            # 'eZQdLW2cEOk' is missing from youtube list (actually it is there)
+            if missing_listed != {'eZQdLW2cEOk'}:
+                print(missing_listed)
+                raise ValueError('Uploaded videos missing from the list!')
+        if len(missing_uploaded) > 0:
+            print(missing_uploaded)
+            raise ValueError('Listed videos missing from youtube:')
 
 
 def get_privacy_status(youtube: d.Resource, youtube_id: str):
@@ -75,13 +99,18 @@ def get_markdown(video_id: int, env: str):
 
 
 def get_video_description(video_data: pd.Series):
-    desc = f'FELADAT GYAKORLÁSA: {video_data.ExerciseLink}\n' \
-           f' - Tantárgy: Matematika 5. osztály\n' \
-           f' - Témakör: {video_data.Topic}\n' \
-           f' - Feladat: {video_data.Exercise}\n\n' \
-           f'Kövess minket Facebook-on!\n' \
-           f'https://www.facebook.com/zsebtanar/\n' \
-           f'\n#zsebtanar #matematika'
+    desc = f'🔥 FELADAT GYAKORLÁSA: {video_data.ExerciseLink}\n' \
+        f'🔥 Kövess minket Facebook-on: ' \
+           f'https://www.facebook.com/groups/zsebtanar\n\n' \
+        f'••••••••••••••••••••••••••••••••••••••••••••••••••••••\n\n' \
+        f'💗 ️Tantárgy: Matematika\n' \
+        f'💛 Osztály: 5. osztály\n' \
+        f'💚 Témakör: {video_data.Topic}\n' \
+        f'💙️ Feladat: {video_data.Exercise}\n\n' \
+        f'••••••••••••••••••••••••••••••••••••••••••••••••••••••\n\n' \
+        f'📝 Kérdés, észrevétel: info@zsebtanar.hu\n' \
+        f'💻 Hivatalos honlap: https://www.zsebtanar.hu\n\n' \
+        f'\n#zsebtanar #matematika'
     return desc
 
 
@@ -120,8 +149,8 @@ def add_videos(youtube: d.Resource, video_ids: list, env: str,
             youtube_link = add_video(youtube=youtube, video_data=video_data,
                                      status=status)
             videos.loc[index, 'NewYoutubeLink'] = youtube_link
-            dframe.export_sheet(df=videos, sheet_name=g.sheet_videos,
-                                f_path=f_path)
+            dataframe.export_sheet(df=videos, sheet_name=g.sheet_videos,
+                                   f_path=f_path)
 
 
 def get_video_data(title: str, env: int):

@@ -29,7 +29,9 @@ def get_video_comments(youtube: d.Resource, video_id: int, export=False):
 
 def get_comment_text(video_data: pd.DataFrame):
     comment = f'➡️FELADAT GYAKORLÁSA: {video_data.ExerciseLink}\n' \
-              f'➡️Még több feladat: https://www.zsebtanar.hu'
+        f'➡️Kövess minket Facebook-on: ' \
+              f'https://www.facebook.com/groups/zsebtanar\n' \
+        f'➡️Még több feladat: https://www.zsebtanar.hu'
     return comment
 
 
@@ -52,16 +54,12 @@ def add_comment(youtube: d.Resource, youtube_id: str, comment_text: str):
 
 
 def update_comment(youtube: d.Resource, comment_id: str, comment_text: str):
-    request = youtube.commentThreads().update(
+    request = youtube.comments().update(
         part='snippet',
         body={
             "id": comment_id,
             "snippet": {
-                "topLevelComment": {
-                    "snippet": {
-                        "textOriginal": comment_text
-                    }
-                }
+                "textOriginal": comment_text
             }
         }
     )
