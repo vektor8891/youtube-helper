@@ -31,7 +31,7 @@ def get_youtube_playlists(youtube: d.Resource):
 
 
 def get_playlist_data(env: str):
-    f_path = g.video_file.format(env=env)
+    f_path = g.video_file_in.format(env=env)
     playlists = pd.read_excel(f_path, sheet_name=g.sheet_playlists)
     playlists['PlaylistName'] = playlists.apply(
         lambda x: f"{x.Name} | {x.Subject} {x.Grade}",
