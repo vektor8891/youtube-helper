@@ -22,8 +22,8 @@ v.compare_videos(env, conn)
 # video_ids = list(range(id_start, id_end + 1))
 video_ids = [1]
 
-# for video_id in video_ids:
-#     print(v.get_markdown(video_id=video_id, env=env))
+for video_id in video_ids:
+    print(v.get_markdown(video_id=video_id, env=env))
 
 # v.add_videos(youtube=conn, video_ids=video_ids, status=status, env=env)
 # v.update_videos(youtube=conn, video_ids=video_ids, status=status, env=env)
