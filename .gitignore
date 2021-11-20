@@ -1,4 +1,4 @@
-venv
+venv/
 private/client[1-9]/*.json
 output
 input/videos
