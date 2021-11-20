@@ -1,5 +1,6 @@
 venv
 private
+!private/*/.gitignore
 output
 input/videos
 input/thumbnails
