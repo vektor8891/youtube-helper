@@ -1,6 +1,5 @@
 venv
-private/*
-!private/client[1-9]/.gitignore
+private/client[1-9]/*.json
 output
 input/videos
 input/thumbnails
