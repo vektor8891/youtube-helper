@@ -29,7 +29,9 @@ def get_video_comments(youtube: d.Resource, video_id: int, export=False):
 
 def get_comment_text(video_data: pd.DataFrame):
     comment = f'➡️FELADAT GYAKORLÁSA: {video_data.ExerciseLink}\n' \
-        f'➡️Kövess minket Facebook-on: ' \
+              f'➡️Iratkozz fel a hírlevelünkre: ' \
+              f'http://eepurl.com/hNOkz9\n' \
+              f'➡️Kövess minket Facebook-on: ' \
               f'https://www.facebook.com/groups/zsebtanar\n' \
         f'➡️Még több feladat: https://www.zsebtanar.hu'
     return comment
@@ -84,5 +86,5 @@ def add_comments(youtube: d.Resource, video_ids: list, env: str):
             comment_id = add_comment(youtube=youtube, youtube_id=youtube_id,
                                      comment_text=comment_text)
             videos.loc[index, 'CommentId'] = comment_id
-    f_path = g.video_file.format(env=env)
+    f_path = g.video_file_out.format(env=env)
     dframe.export_sheet(df=videos, sheet_name=g.sheet_videos, f_path=f_path)

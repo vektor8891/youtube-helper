@@ -9,7 +9,7 @@ import lib.globals as g
 
 
 def get_videos(env: str):
-    f_path = g.video_file.format(env=env)
+    f_path = g.video_file_in.format(env=env)
     videos = pd.read_excel(f_path, sheet_name=g.sheet_videos)
     return videos
 
@@ -100,17 +100,19 @@ def get_markdown(video_id: int, env: str):
 
 def get_video_description(video_data: pd.Series):
     desc = f'🔥 FELADAT GYAKORLÁSA: {video_data.ExerciseLink}\n' \
-        f'🔥 Kövess minket Facebook-on: ' \
+           f'🔥 Iratkozz fel a hírlevelünkre: ' \
+           f'http://eepurl.com/hNOkz9\n' \
+           f'🔥 Kövess minket Facebook-on: ' \
            f'https://www.facebook.com/groups/zsebtanar\n\n' \
-        f'••••••••••••••••••••••••••••••••••••••••••••••••••••••\n\n' \
-        f'💗 ️Tantárgy: Matematika\n' \
-        f'💛 Osztály: 5. osztály\n' \
-        f'💚 Témakör: {video_data.Topic}\n' \
-        f'💙️ Feladat: {video_data.Exercise}\n\n' \
-        f'••••••••••••••••••••••••••••••••••••••••••••••••••••••\n\n' \
-        f'📝 Kérdés, észrevétel: info@zsebtanar.hu\n' \
-        f'💻 Hivatalos honlap: https://www.zsebtanar.hu\n\n' \
-        f'\n#zsebtanar #matematika'
+           f'••••••••••••••••••••••••••••••••••••••••••••••••••••••\n\n' \
+           f'💗 ️Tantárgy: Matematika\n' \
+           f'💛 Osztály: 5. osztály\n' \
+           f'💚 Témakör: {video_data.Topic}\n' \
+           f'💙️ Feladat: {video_data.Exercise}\n\n' \
+           f'••••••••••••••••••••••••••••••••••••••••••••••••••••••\n\n' \
+           f'📝 Kérdés, észrevétel: info@zsebtanar.hu\n' \
+           f'💻 Hivatalos honlap: https://www.zsebtanar.hu\n\n' \
+           f'\n#zsebtanar #matematika'
     return desc
 
 
@@ -140,7 +142,7 @@ def add_video(youtube: d.Resource, video_data: pd.Series, status='private'):
 def add_videos(youtube: d.Resource, video_ids: list, env: str,
                status='private', delete_old=False):
     videos = get_videos(env=env)
-    f_path = g.video_file.format(env=env)
+    f_path = g.video_file_out.format(env=env)
     for index, video_data in videos[videos.Id.isin(video_ids)].iterrows():
         if delete_old and video_data.NewYoutubeLink:
             video_id = video_data.NewYoutubeLink.split('=')[1]
